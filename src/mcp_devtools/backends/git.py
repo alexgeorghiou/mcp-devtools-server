@@ -20,6 +20,7 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
 
@@ -312,6 +313,13 @@ class SubprocessGitBackend:
         return text + ("\n... [truncated]" if truncated else "")
 
 
+def _epoch_to_iso(raw: str) -> str:
+    try:
+        return datetime.fromtimestamp(int(raw), tz=UTC).isoformat()
+    except ValueError:
+        return raw
+
+
 def parse_porcelain_blame(out: str) -> list[BlameLine]:
     """Parse ``git blame --porcelain``; commit metadata appears only on first use of a SHA."""
     meta: dict[str, dict[str, str]] = {}
@@ -328,7 +336,7 @@ def parse_porcelain_blame(out: str) -> list[BlameLine]:
                     line=current_line,
                     sha=current_sha[:12],
                     author=info.get("author", ""),
-                    date=info.get("author-time", ""),
+                    date=_epoch_to_iso(info.get("author-time", "")),
                     summary=info.get("summary", ""),
                     content=raw[1:],
                 )
