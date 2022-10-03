@@ -31,10 +31,19 @@ def _git(repo: Path, *args: str) -> str:
     ).stdout
 
 
-@pytest.fixture
-def git_repo(tmp_path: Path) -> Path:
-    """A small real repository with three commits and one uncommitted change."""
-    repo = tmp_path / "sample-repo"
+@pytest.fixture(scope="session")
+def anyio_backend() -> str:
+    return "asyncio"
+
+
+@pytest.fixture(scope="session")
+def git_repo(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A small real repository with three commits and one uncommitted change.
+
+    Session-scoped because creating it costs several git invocations; tests
+    must treat it as read-only (which is all this server can do anyway).
+    """
+    repo = tmp_path_factory.mktemp("git") / "sample-repo"
     repo.mkdir()
     _git(repo, "init", "-q", "-b", "main")
     _git(repo, "config", "commit.gpgsign", "false")
@@ -60,9 +69,9 @@ def git_repo(tmp_path: Path) -> Path:
     return repo
 
 
-@pytest.fixture
-def log_dir(tmp_path: Path) -> Path:
-    root = tmp_path / "logs"
+@pytest.fixture(scope="session")
+def log_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    root = tmp_path_factory.mktemp("logs") / "logs"
     (root / "api").mkdir(parents=True)
     (root / "api" / "api.log").write_text(
         "\n".join(

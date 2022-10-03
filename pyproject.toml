@@ -33,7 +33,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8.3",
-  "pytest-asyncio>=0.24",
   "ruff>=0.7",
   "mypy>=1.13",
   "types-PyYAML>=6.0",
@@ -62,11 +61,10 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "S108"]
+"tests/**" = ["S101", "S104", "S105", "S106", "S108"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-asyncio_mode = "auto"
 addopts = "-ra"
 
 [tool.mypy]
