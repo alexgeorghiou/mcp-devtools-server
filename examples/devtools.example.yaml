@@ -1,0 +1,55 @@
+# Example configuration for mcp-devtools-server.
+#
+# Every allow-list below is exhaustive: anything not listed is refused.
+# Relative paths are resolved against the directory containing this file.
+# String values may reference environment variables: ${NAME} or ${NAME:-default}.
+
+server:
+  name: devtools
+  audit_log: ./audit.jsonl        # JSON lines; omit to keep an in-memory audit trail
+  audit_tail_lines: 50            # entries served by the devtools://audit/tail resource
+  expose_config_resource: true    # devtools://config (DSNs are reduced to alias names)
+
+git:
+  enabled: true
+  repos:                          # alias -> local checkout
+    devtools: ..                  # this repository
+    # api: ~/src/api-service
+  max_output_bytes: 200000        # cap on diff/show output
+  max_log_entries: 200
+  timeout_seconds: 15
+
+docker:
+  enabled: true
+  containers:                     # exact names or fnmatch patterns
+    - devtools-postgres
+    - "app-*"
+  max_log_lines: 500
+  timeout_seconds: 15
+
+postgres:
+  enabled: true
+  databases:                      # alias -> libpq DSN; use a SELECT-only role
+    sample: "postgresql://devtools_reader:${DEVTOOLS_PG_PASSWORD:-reader}@localhost:5432/library"
+  max_rows: 500
+  statement_timeout_ms: 5000
+  connect_timeout_seconds: 5
+
+http:
+  enabled: true
+  allowed_hosts:
+    - example.com
+    - "*.example.com"
+  allow_private_networks: false   # set true to probe internal services (disables the SSRF IP check)
+  allowed_ports: [80, 443, 8080, 8443]
+  timeout_seconds: 10
+  max_redirects: 3
+
+logs:
+  enabled: true
+  directories:                    # alias -> directory
+    sample: ./logs
+  max_results: 200
+  max_context_lines: 5
+  max_file_bytes: 52428800        # only the last 50 MB of larger files are scanned
+  file_globs: ["*.log", "*.log.*", "*.jsonl", "*.txt"]
