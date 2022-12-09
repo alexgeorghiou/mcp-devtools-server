@@ -160,6 +160,10 @@ class FileSystemLogSearcher:
         return io.StringIO(data.decode("utf-8", errors="replace")), partial
 
 
+_Pending = tuple[int, str, list[str], list[str]]
+"""(line number, line, context before, context after collected so far)"""
+
+
 def _scan(
     lines: Iterable[str],
     pattern: re.Pattern[str],
@@ -169,14 +173,14 @@ def _scan(
 ) -> Iterator[LogMatch | None]:
     """Yield matches with context; yields ``None`` once if the time budget runs out."""
     before: deque[str] = deque(maxlen=context)
-    pending: list[tuple[int, str, list[str], list[str]]] = []
+    pending: list[_Pending] = []
     for number, raw in enumerate(lines, start=1):
         if number % 512 == 0 and time.monotonic() > deadline:
             yield from _flush(pending, rel)
             yield None
             return
         line = raw.rstrip("\r\n")[:MAX_LINE_CHARS]
-        still_open = []
+        still_open: list[_Pending] = []
         for item in pending:
             item[3].append(line)
             if len(item[3]) >= context:
@@ -185,15 +189,14 @@ def _scan(
                 still_open.append(item)
         pending = still_open
         if pattern.search(line):
-            entry = (number, line, list(before), [])
             if context == 0:
                 yield LogMatch(rel, number, line, [], [])
             else:
-                pending.append(entry)
+                pending.append((number, line, list(before), []))
         before.append(line)
     yield from _flush(pending, rel)
 
 
-def _flush(pending: list[tuple[int, str, list[str], list[str]]], rel: str) -> Iterator[LogMatch]:
+def _flush(pending: list[_Pending], rel: str) -> Iterator[LogMatch]:
     for number, line, before, after in pending:
         yield LogMatch(rel, number, line, before, after)

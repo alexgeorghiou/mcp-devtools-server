@@ -63,7 +63,7 @@ def summarise_inspect(raw: dict[str, Any]) -> dict[str, Any]:
         key, sep, _value = str(item).partition("=")
         env.append(f"{key}={REDACTED}" if sep and _SECRET_ENV.search(key) else str(item))
     health = state.get("Health") or {}
-    return redact_value(
+    summary: dict[str, Any] = redact_value(
         {
             "id": str(raw.get("Id", ""))[:12],
             "name": str(raw.get("Name", "")).lstrip("/"),
@@ -100,6 +100,7 @@ def summarise_inspect(raw: dict[str, Any]) -> dict[str, Any]:
             "cpus": (host.get("NanoCpus") or 0) / 1e9 or None,
         }
     )
+    return summary
 
 
 class DockerCliBackend:
