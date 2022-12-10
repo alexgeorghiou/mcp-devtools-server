@@ -1,0 +1,48 @@
+# Local playground: the MCP server over streamable HTTP plus a sample Postgres.
+#
+#   docker compose up --build
+#   -> MCP endpoint at http://localhost:8765/mcp  (Bearer token: see MCP_DEVTOOLS_HTTP_TOKEN)
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: mcp-devtools-postgres
+    environment:
+      POSTGRES_DB: library
+      POSTGRES_USER: library_owner
+      POSTGRES_PASSWORD: owner-password
+    volumes:
+      - ./examples/compose/initdb:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library_owner -d library"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  devtools:
+    build: .
+    container_name: mcp-devtools-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MCP_DEVTOOLS_CONFIG: /config/devtools.yaml
+      MCP_DEVTOOLS_HTTP_TOKEN: ${MCP_DEVTOOLS_HTTP_TOKEN:-change-me}
+      DEVTOOLS_PG_PASSWORD: reader
+    volumes:
+      - ./examples/compose/devtools.yaml:/config/devtools.yaml:ro
+      - ./:/workspace:ro
+      - ./examples/logs:/logs:ro
+      - audit:/data
+      # Uncomment to enable the docker_* tools. Note: socket access is root-equivalent
+      # on the host; prefer a docker socket proxy that only allows GET requests.
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "127.0.0.1:8765:8765"
+
+volumes:
+  pgdata:
+  audit:

@@ -1,0 +1,24 @@
+# Configuration used by docker-compose.yml. Paths are inside the container.
+server:
+  audit_log: /data/audit.jsonl
+
+git:
+  repos:
+    devtools: /workspace
+
+docker:
+  # Requires the docker socket mount in docker-compose.yml (commented out by default).
+  containers: ["mcp-devtools-*"]
+
+postgres:
+  databases:
+    library: "postgresql://devtools_reader:${DEVTOOLS_PG_PASSWORD:-reader}@postgres:5432/library"
+  max_rows: 200
+  statement_timeout_ms: 3000
+
+http:
+  allowed_hosts: ["example.com", "*.example.com"]
+
+logs:
+  directories:
+    sample: /logs
