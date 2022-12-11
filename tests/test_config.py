@@ -114,7 +114,9 @@ def test_public_view_hides_dsns(settings: Settings) -> None:
     assert "s3cret" not in str(view)
 
 
-def test_example_config_is_valid() -> None:
-    example = Path(__file__).parent.parent / "examples" / "devtools.example.yaml"
-    settings = load_settings(example, env={"DEVTOOLS_PG_PASSWORD": "x"})
-    assert settings.enabled_tools()
+@pytest.mark.parametrize("name", ["devtools.example.yaml", "compose/devtools.yaml"])
+def test_shipped_example_configs_are_valid(name: str) -> None:
+    example = Path(__file__).parent.parent / "examples" / name
+    settings = load_settings(example, env={})
+    assert settings.enabled_tools() == ["git", "docker", "postgres", "http", "logs"]
+    assert "reader" in next(iter(settings.postgres.databases.values()))

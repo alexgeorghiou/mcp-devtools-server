@@ -16,7 +16,7 @@ RUN apt-get update \
 COPY --from=docker:27-cli /usr/local/bin/docker /usr/local/bin/docker
 COPY --from=build /opt/venv /opt/venv
 
-RUN useradd --create-home --uid 10001 devtools
+RUN useradd --create-home --uid 10001 devtools  && mkdir -p /data /config  && chown devtools /data
 USER devtools
 WORKDIR /home/devtools
 
