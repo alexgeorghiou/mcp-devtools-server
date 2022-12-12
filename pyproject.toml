@@ -66,6 +66,7 @@ ignore = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = ["integration: needs external services (Postgres); skipped unless configured"]
 
 [tool.mypy]
 python_version = "3.12"
